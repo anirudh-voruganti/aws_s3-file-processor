@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements/requirements.txt
+          pip install -r requirements/requirements-dev.txt
+          pip install flake8
+
+      - name: Run tests
+        run: python -m pytest lambda/tests/ -v
+
+      - name: Lint with flake8
+        run: flake8 lambda/ stacks/ cdk_patterns/ app.py scripts/deploy.py --max-line-length=120
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: CDK synth
+        run: cdk synth
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          CDK_DEFAULT_ACCOUNT: "123456789012"
+          CDK_DEFAULT_REGION: us-east-1
